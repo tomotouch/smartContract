@@ -51,7 +51,7 @@ contract Staker is DSAuth, DSMath {
 		uint256 _equaledUSD = calIntrest(_amount, _period);
 		uint256 _touchToUser = _equaledUSD / touchPrice;
 		IERC20(touchToken).transfer(msg.sender, _touchToUser);
-		emit userDeposit(msg.sender, uint256 _amount, block.timestamp);
+		emit userDeposit(msg.sender, _amount, block.timestamp);
 	}
 
 	function withdraw(uint256 _withdrawId) external {
@@ -105,7 +105,7 @@ contract Staker is DSAuth, DSMath {
 		ILendFMe(lendFMe).withdraw(stableCoin, _amount);
 		IERC20(stableCoin).transfer(msg.sender, _amount);
 		principle -= _amount;
-		emit userWithdraw(msg.sender, uint256 _amount, block.timestamp);
+		emit userWithdraw(msg.sender, _amount, block.timestamp);
 	}
 
 	function getFromUser(uint256 _amount) internal	{
