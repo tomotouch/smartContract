@@ -147,6 +147,10 @@ contract('test', function(accounts) {
         // user1 withdraw
         tx = await staker.withdraw(1, {from: user1})
         await showBalance("user1 withdraw withdraw id 1", user1)
+        
+        // user1 withdraw
+        tx = await staker.withdraw(1, {from: user1})
+        await showBalance("user1 withdraw withdraw id 1 second time", user1)
 
         // user2 withdraw
         tx = await staker.withdraw(1, {from: user2})

@@ -41,7 +41,7 @@ contract Staker is DSAuth, DSMath {
 	}
 
 	function deposit(uint256 _amount, uint256 _period) external {
-		require(_amount % 500000000 == 0, "the supplied amount should be multiple by the 500.");
+		require(_amount >= 500000000, "the supplied amount should be greater than 500.");
 		require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
 		getFromUser(_amount);
 		userDepositsCounts[msg.sender] += 1;
