@@ -13,6 +13,8 @@ contract TouchEvent is DSAuth, DSMath{
 	mapping(uint256 => Event) public events;
 	mapping(uint256 => mapping(uint256 => Option)) public options;
 
+	event eventEnds(string eventName);
+
 	struct Event {
 		uint256 eventId;
 		uint256 options;
@@ -67,10 +69,12 @@ contract TouchEvent is DSAuth, DSMath{
 
 	function setLikeEnded() external auth {
 		isLikeEnded = true;
+		emit eventEnds("Vote");
 	}
 
 	function setBidEnded() external auth {
 		isBidEnded = true;
+		emit eventEnds("Bid");
 	}
 
 }
