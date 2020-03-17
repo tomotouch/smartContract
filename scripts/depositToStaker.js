@@ -17,18 +17,18 @@ module.exports = function(callback) {
   const depositAmount = web3.utils.toWei("1","ether")
   // StakerContract.methods.getTime().call().then(console.log)
   
-  // 5. Mint Token
-  DSTokenContract.methods.mint(account, web3.utils.toWei("20","ether")).send({from: account})
+  // 5. Mint Token to Staker address
+  DSTokenContract.methods.mint(StakerAddress, web3.utils.toWei("20","ether")).send({from: account})
     .then(res=> {
-      return DSTokenContract.methods.balanceOf(account).call()
+      return DSTokenContract.methods.balanceOf(StakerAddress).call()
     })
     .then(balance => {
-      console.log('user\' s TOUCH balance:', balance)
-      // 7. approve staker to use balance of STABLE COIN
+      console.log('Staker\' s TOUCH balance:', balance)
+      // 7. user/owner approves staker to use balance of STABLE COIN
       return StableCoinContract.methods.approve(StakerAddress, depositAmount).send({from: account, gasLimit: 750000})
     })
     .then(res => {
-      // 8. deposit
+      // 8. user/owner deposits to Staker
       console.log('user approved staker contract')
       return StakerContract.methods.deposit(depositAmount, 1).send({from: account, gasLimit: 750000})
     })
