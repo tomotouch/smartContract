@@ -10,6 +10,7 @@ contract TouchEvent is DSAuth, DSMath{
 	bool public isLikeEnded = true;
 	bool public isBidEnded = true;
 	uint256 public eventCounts;
+	uint256 public totalBidCounts;
 	mapping(uint256 => Event) public events;
 	mapping(uint256 => mapping(uint256 => Option)) public options;
 
@@ -56,6 +57,7 @@ contract TouchEvent is DSAuth, DSMath{
 		option.firstBidder = msg.sender;
 		option.firstBid = _price;
 		options[eventCounts][_option] = option;
+		totalBidCounts += 1;
 	}
 
 	// admin
