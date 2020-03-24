@@ -19,5 +19,8 @@
   "bugs": {
     "url": "https://github.com/tomotouch/smartContract/issues"
   },
-  "homepage": "https://github.com/tomotouch/smartContract#readme"
+  "homepage": "https://github.com/tomotouch/smartContract#readme",
+  "dependencies": {
+    "bn.js": "^5.1.1"
+  }
 }

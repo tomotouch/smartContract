@@ -30,6 +30,9 @@ contract Staker is DSAuth, DSMath {
 	mapping (address => mapping (uint256 => DepositInfo)) public deposits;
 	mapping (address => uint256) public userDepositsCounts;
 
+	event userDeposit(address indexed sender, uint256 value, uint256 timestamp);
+    event userWithdraw(address indexed sender, uint256 value, uint256 timestamp);
+
 	function active(address _touch, address _stable, address _lendFMe) public {
 		require(!actived, "contract has alreadt actived");
 		actived = true;
@@ -133,6 +136,8 @@ contract Staker is DSAuth, DSMath {
 	function sendToUser(uint256 _amount) internal {
 		ILendFMe(lendFMe).withdraw(stableCoin, _amount);
 		IERC20(stableCoin).transfer(msg.sender, _amount);
+		principle -= _amount;
+		emit userWithdraw(msg.sender, _amount, block.timestamp);
 	}
 
 	function getFromUser(uint256 _amount) internal	{
