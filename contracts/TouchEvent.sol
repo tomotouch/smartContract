@@ -2,9 +2,33 @@ pragma solidity ^0.5.4;
 
 import './IERC20.sol';
 import './DSLibrary/DSAuth.sol';
-import './DSLibrary/DSMath.sol';
 
-contract TouchEvent is DSAuth, DSMath{
+library DSMath {
+    function add(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x, "ds-math-add-overflow");
+    }
+    function sub(uint x, uint y) internal pure returns (uint z) {
+        require((z = x - y) <= x, "ds-math-sub-underflow");
+    }
+    function mul(uint x, uint y) internal pure returns (uint z) {
+        require(y == 0 || (z = x * y) / y == x, "ds-math-mul-overflow");
+    }
+
+    function div(uint x, uint y) internal pure returns (uint z) {
+        require(y > 0, "ds-math-div-overflow");
+        z = x / y;
+    }
+
+    function min(uint x, uint y) internal pure returns (uint z) {
+        return x <= y ? x : y;
+    }
+    function max(uint x, uint y) internal pure returns (uint z) {
+        return x >= y ? x : y;
+    }
+}
+
+contract TouchEvent is DSAuth{
+	using DSMath for uint256;
 
 	address public touchToken;
 	address public bidProfitBeneficiary;
@@ -13,6 +37,8 @@ contract TouchEvent is DSAuth, DSMath{
 	uint256 public eventCounts;
 	mapping(uint256 => Event) public events;
 	mapping(uint256 => mapping(uint256 => Option)) public options;
+
+	// eventId => optionId => user
 	mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public options_userLike;
 	mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public options_addr2Id;
 	mapping(uint256 => mapping(uint256 => mapping(uint256 => address))) public options_id2Addr;
@@ -43,14 +69,14 @@ contract TouchEvent is DSAuth, DSMath{
 		require(_option <= event_.options, "the option is not exist");
 		IERC20(touchToken).transferFrom(msg.sender, address(this), _amounts);
 		Option memory option_ = options[eventCounts][_option];
-		option_.likes += _amounts;
-		event_.totalLiked += _amounts;
+		option_.likes = option_.likes.add(_amounts);
+		event_.totalLiked = event_.totalLiked.add(_amounts);
 		if(options_addr2Id[eventCounts][_option][msg.sender] == 0) {
 			option_.uniqueLike += 1;
 			options_addr2Id[eventCounts][_option][msg.sender] = option_.uniqueLike;
 			options_id2Addr[eventCounts][_option][option_.uniqueLike] = msg.sender;
 		}
-		options_userLike[eventCounts][_option][msg.sender] += _amounts;
+		options_userLike[eventCounts][_option][msg.sender] = options_userLike[eventCounts][_option][msg.sender].add(_amounts);
 
 		options[eventCounts][_option] = option_;
 		events[eventCounts] = event_;
@@ -61,15 +87,15 @@ contract TouchEvent is DSAuth, DSMath{
 		require(!isBidEnded, "bid is ended");
 		require(_option <= event_.options, "the option is not exist");
 		require(msg.sender != event_.firstBidder, "the sender is already the top bidder");
-		require(_price > event_.firstBid, "does not exceed the first bid");
+		require(_price > event_.firstBid.mul(110).div(100), "must exceed the last bid more than 10%");
 		
 		if (event_.firstBidder == address(0)) {
 			event_.firstBidder = bidProfitBeneficiary;
 		}
 
-		uint256 _amountsToOwner = (_price - event_.firstBid)/5;
+		uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
 		IERC20(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
-		IERC20(touchToken).transferFrom(msg.sender, event_.firstBidder, _price - _amountsToOwner);
+		IERC20(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
 		event_.firstBidder = msg.sender;
 		event_.firstBid = _price;
 		event_.currentOption = _option;
