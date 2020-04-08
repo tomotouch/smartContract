@@ -17,7 +17,15 @@ contract('test', function(accounts) {
     const user4 = accounts[4]
     const user5 = accounts[5]
     const user6 = accounts[6]
-    const bidProfitBeneficiary = accounts[7]
+    const user7 = accounts[7]
+    const user8 = accounts[8]
+    const user9 = accounts[9]
+    const user10 = accounts[10]
+    const user11 = accounts[11]
+    const user12 = accounts[12]
+    const user13 = accounts[13]
+    const user14 = accounts[14]
+    const bidProfitBeneficiary = accounts[15]
 
     let tx, currentTime
     let lendFMe, staker, eventContract 
@@ -60,7 +68,23 @@ contract('test', function(accounts) {
             console.log("user5") 
         } else if (address == user6) {
             console.log("user6")
-        } else {
+        } else if (address == user7) {
+            console.log("user7")
+        } else if (address == user8) {
+            console.log("user8")
+        } else if (address == user9) {
+            console.log("user9")
+        } else if (address == user10) {
+            console.log("user10") 
+        } else if (address == user11) {
+            console.log("user11")
+        } else if (address == user12) {
+            console.log("user12")
+        } else if (address == user13) {
+            console.log("user13") 
+        } else if (address == user14) {
+            console.log("user14")
+        }else {
             console.log(address)
         }
         console.log("\tusdt balance:", f6(await usdt.balanceOf(address)))
@@ -70,6 +94,16 @@ contract('test', function(accounts) {
         console.log("\ttouch balance:", f6(await touch.balanceOf(staker.address)))
         console.log("\tstaker's total usdt balance (including in Defi):", f6(await staker.tokenBalance()))
         console.log("\tstaker's profit: ", f6(await staker.getProfit()))
+    }
+
+    const showReferalInfo = async function (note, address) {
+        let _account = await staker.accounts(address)
+        console.log("** " + note)
+        console.log("referredCount: ", _account.referredCount.toString())
+        console.log("referredAmount: ", f6(_account.referredAmount).toString())
+        console.log("referredMilestoneAchived: ", f6(_account.referredMilestoneAchived).toString())
+        console.log("rewards: ", f6(_account.rewards).toString())
+        console.log("is referalName paid: ", _account.isReferalNamePaid)
     }
 
     const showEventStatus = async function (note) {
@@ -130,7 +164,15 @@ contract('test', function(accounts) {
         tx = await usdt.mint(user4, d6(1000))
         tx = await usdt.mint(user5, d6(1000))
         tx = await usdt.mint(user6, d6(1000))
-        tx = await touch.mint(staker.address, d6(10000))
+        tx = await usdt.mint(user7, d6(5000))
+        tx = await usdt.mint(user8, d6(5000))
+        tx = await usdt.mint(user9, d6(5000))
+        tx = await usdt.mint(user10, d6(5000))
+        tx = await usdt.mint(user11, d6(5000))
+        tx = await usdt.mint(user12, d6(5000))
+        tx = await usdt.mint(user13, d6(5000))
+        tx = await usdt.mint(user14, d6(5000))
+        tx = await touch.mint(staker.address, d6(922223))
 
         tx = await usdt.approvex(staker.address, {from: user1})
         tx = await usdt.approvex(staker.address, {from: user2})
@@ -138,6 +180,14 @@ contract('test', function(accounts) {
         tx = await usdt.approvex(staker.address, {from: user4})
         tx = await usdt.approvex(staker.address, {from: user5})
         tx = await usdt.approvex(staker.address, {from: user6})
+        tx = await usdt.approvex(staker.address, {from: user7})
+        tx = await usdt.approvex(staker.address, {from: user8})
+        tx = await usdt.approvex(staker.address, {from: user9})
+        tx = await usdt.approvex(staker.address, {from: user10})
+        tx = await usdt.approvex(staker.address, {from: user11})
+        tx = await usdt.approvex(staker.address, {from: user12})
+        tx = await usdt.approvex(staker.address, {from: user13})
+        tx = await usdt.approvex(staker.address, {from: user14})
 
         console.log("-------------------------------------------")
         console.log("** init")
@@ -159,43 +209,108 @@ contract('test', function(accounts) {
         console.log("user6")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user6)))
         console.log("\ttouch balance:", f6(await touch.balanceOf(user6)))
+        console.log("user7")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user7)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user7)))
+        console.log("user8")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user8)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user8)))
+        console.log("user9")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user9)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user9)))
+        console.log("user10")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user10)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user10)))
+        console.log("user11")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user11)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user11)))
+        console.log("user12")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user12)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user12)))
+        console.log("user13")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user13)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user13)))
+        console.log("user14")
+        console.log("\tusdt balance:", f6(await usdt.balanceOf(user14)))
+        console.log("\ttouch balance:", f6(await touch.balanceOf(user14)))
         console.log("staker")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(staker.address)))
         console.log("\ttouch balance:", f6(await touch.balanceOf(staker.address))) 
         console.log("\tstaker's total usdt balance (including in Defi):", f6(await staker.tokenBalance()))
 
         tx = await staker.setTouchPrice(12500)
-        tx = await staker.deposit(d6(500), 1, {from: user1})
+        tx = await staker.deposit(d6(500), 1, user1, {from: user1})
         await showBalance("user1 deposit 500 for 1 month", user1)
 
-        tx = await staker.deposit(d6(500), 2, {from: user2})
+        tx = await staker.deposit(d6(500), 2, user2, {from: user2})
         await showBalance("user2 deposit 500 for 2 month", user2)
 
-        tx = await staker.deposit(d6(1000), 3, {from: user3})
+        tx = await touch.approvex(staker.address, {from: user2})
+        tx = await staker.payForReferalName({from: user2})
+        await showBalance("user2 registered a name", user2)
+        await showReferalInfo("user2 registered a name", user2)
+
+        tx = await staker.deposit(d6(1000), 3, user2, {from: user3})
         await showBalance("user3 deposit 1000 for 3 month", user3)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
 
         tx = await staker.setTouchPrice(14250)
-        tx = await staker.deposit(d6(500), 1, {from: user4})
+        tx = await staker.deposit(d6(500), 1, user2, {from: user4})
         await showBalance("user4 deposit 500 for 1 month", user4)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
 
         tx = await staker.setTouchPrice(15000)
-        tx = await staker.deposit(d6(500), 1, {from: user5})
+        tx = await staker.deposit(d6(500), 1, user2, {from: user5})
         await showBalance("user5 deposit 500 for 1 month", user5)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
 
         tx = await staker.setTouchPrice(16500)
-        tx = await staker.deposit(d6(500), 1, {from: user6})
+        tx = await staker.deposit(d6(500), 1, user2, {from: user6})
         await showBalance("user6 deposit 500 for 1 month", user6)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user7})
+        await showBalance("user7 deposit 5000 for 1 month", user7)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user8})
+        await showBalance("user8 deposit 5000 for 1 month", user8)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user9})
+        await showBalance("user9 deposit 5000 for 1 month", user9)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user10})
+        await showBalance("user10 deposit 5000 for 1 month", user10)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user11})
+        await showBalance("user11 deposit 5000 for 1 month", user11)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user12})
+        await showBalance("user12 deposit 5000 for 1 month", user12)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user13})
+        await showBalance("user13 deposit 5000 for 1 month", user13)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
+
+        tx = await staker.deposit(d6(5000), 1, user2, {from: user14})
+        await showBalance("user14 deposit 5000 for 1 month", user14)
+        await showReferalInfo("user2 get referred from the last deposit", user2)
 
         // set time to one month
         currentTime = await staker.getTime();
         tx = await staker.setTime(currentTime + (60 * 60 * 24 * 50 + 1));
 
         // user1 withdraw
-        tx = await staker.withdraw(1, {from: user1})
+        tx = await staker.withdraw(user1, 1, {from: user1})
         await showBalance("user1 withdraw withdraw id 1", user1)
 
         // user2 withdraw
-        tx = await staker.withdraw(1, {from: user2})
+        tx = await staker.withdraw(user2, 1, {from: user2})
         await showBalance("user2 withdraw id 1", user2)
 
         await renewEventContract()
@@ -208,6 +323,10 @@ contract('test', function(accounts) {
         // user1 like option1
         tx = await eventContract.userLikeGirl(0, d6(100), {from: user1})
         await showEventStatus("user1 like option 0 with 1 LIKE (100 touch)")
+
+        // user3 like option1
+        tx = await eventContract.userLikeGirl(0, d6(200), {from: user3})
+        await showEventStatus("user3 like option 0 with 2 LIKE (200 touch)")
 
         // user2 bid option 1
         tx = await eventContract.userBidGirl(1, d6(110), {from: user2})
