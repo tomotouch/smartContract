@@ -43,7 +43,8 @@ contract TouchEvent is DSAuth{
 	mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public options_addr2Id;
 	mapping(uint256 => mapping(uint256 => mapping(uint256 => address))) public options_id2Addr;
 
-	event EventEnds(string eventName);
+	event GetTouchEventWinners(address dateWinner, address[] voteWinners) // array of vote winners
+	event Outbid(address previousBidder)
 
 	struct Event {
 		uint256 eventId;
@@ -96,6 +97,7 @@ contract TouchEvent is DSAuth{
 		uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
 		IERC20(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
 		IERC20(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
+		emit Outbid(event_.firstBidder)
 		event_.firstBidder = msg.sender;
 		event_.firstBid = _price;
 		event_.currentOption = _option;
@@ -122,12 +124,14 @@ contract TouchEvent is DSAuth{
 
 	function setLikeEnded() external auth {
 		isLikeEnded = true;
-		emit EventEnds("Vote");
 	}
 
 	function setBidEnded() external auth {
 		isBidEnded = true;
-		emit EventEnds("Bid");
+		Event memory event_ = events[eventCounts];
+		
+		emit GetTouchEventWinners(event_.firstBidder) // add voteWinners' addresses to the second parameter
+		
 	}
 
 	// owner

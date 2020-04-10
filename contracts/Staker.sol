@@ -46,9 +46,6 @@ contract Staker is DSAuth {
 	uint256 public principle;
 	bool public actived; 
 
-	event UserDeposit(address indexed sender, uint256 value, uint256 timestamp);
-    event UserWithdraw(address indexed sender, uint256 value, uint256 timestamp);
-
 	struct DepositInfo {
 		uint256 amount;
 		uint256 startTime;
@@ -67,7 +64,7 @@ contract Staker is DSAuth {
 	mapping (address => uint256) public userDepositsCounts;
 	mapping (address => Account) public accounts;
 
-	event userDeposit(address indexed sender, uint256 value, uint256 timestamp);
+	event userDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount);
     event userWithdraw(address indexed sender, uint256 value, uint256 timestamp);
 
 	function active(address _touch, address _stable, address _lendFMe) public {
@@ -104,7 +101,7 @@ contract Staker is DSAuth {
 		uint256 _touchToUser = _equaledUSD.mul(10 ** 6).div(touchPrice);
 		IERC20(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
 
-		emit UserDeposit(msg.sender, _amount, block.timestamp);
+		emit userDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus));
 	}
 
 	function withdraw(address _user, uint256 _withdrawId) external {
