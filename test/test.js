@@ -51,6 +51,14 @@ contract('test', function(accounts) {
         return web3.utils.fromWei(amount, "mwei")
     }
 
+    const d8 = function (amount) {
+        return amount * 100000000
+    }
+
+    const f8 = function (amount) {
+        return amount / 100000000
+    }
+
     const showBalance = async function (note, address) {
         //tx = await lendFMe.makeProfitToUser(staker.address, usdt.address, 1)
         console.log("-------------------------------------------")
@@ -88,10 +96,10 @@ contract('test', function(accounts) {
             console.log(address)
         }
         console.log("\tusdt balance:", f6(await usdt.balanceOf(address)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(address)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(address)))
         console.log("staker")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(staker.address)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(staker.address)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(staker.address)))
         console.log("\tstaker's total usdt balance (including in Defi):", f6(await staker.tokenBalance()))
         console.log("\tstaker's profit: ", f6(await staker.getProfit()))
     }
@@ -101,8 +109,8 @@ contract('test', function(accounts) {
         console.log("** " + note)
         console.log("referredCount: ", _account.referredCount.toString())
         console.log("referredAmount: ", f6(_account.referredAmount).toString())
-        console.log("referredMilestoneAchived: ", f6(_account.referredMilestoneAchived).toString())
-        console.log("rewards: ", f6(_account.rewards).toString())
+        console.log("referredMilestoneAchived: ", f8(_account.referredMilestoneAchived).toString())
+        console.log("rewards: ", f8(_account.rewards).toString())
         console.log("is referalName paid: ", _account.isReferalNamePaid)
     }
 
@@ -115,9 +123,9 @@ contract('test', function(accounts) {
         console.log("is liked eneded? ", (await eventContract.isLikeEnded()))
         console.log("is bid ended? ", (await eventContract.isBidEnded()))
         console.log("current event's options: ", _event.options.toString())
-        console.log("current event's total liked: ", f6(_event.totalLiked))
+        console.log("current event's total liked: ", f8(_event.totalLiked))
         console.log("top bidder: ", (await _event.firstBidder))
-        console.log("bid: ", f6(_event.firstBid).toString())
+        console.log("bid: ", f8(_event.firstBid).toString())
         console.log("current option: ", _event.currentOption.toString())
         if(_event.options.toNumber() > 1) {
             console.log("option info: ")
@@ -126,7 +134,7 @@ contract('test', function(accounts) {
         for (let i = 0; i < _event.options.toNumber(); i++) {
             _option = await eventContract.options(_eventId, i)
             console.log("\t option id: ", i)
-            console.log("\t option likes: ", f6(_option.likes))
+            console.log("\t option likes: ", f8(_option.likes))
             console.log("\t unique liker: ", _option.uniqueLike.toString())
             likers = await eventContract.getOptionLiker(_eventId, i, 0, _option.uniqueLike.toNumber())
             console.log("\t option likers: ", (await eventContract.getOptionLiker(_eventId, i, 0, _option.uniqueLike.toNumber())))
@@ -136,11 +144,11 @@ contract('test', function(accounts) {
 
     const showUserTouchBalance = async function () {
         console.log("touch balance")
-        console.log("\tuser1: ", f6(await touch.balanceOf(user1)))
-        console.log("\tuser2: ", f6(await touch.balanceOf(user2)))
-        console.log("\tuser3: ", f6(await touch.balanceOf(user3)))
-        console.log("\tevent contract: ", f6(await touch.balanceOf(eventContract.address)))
-        console.log("\tplatform profit: ", f6(await touch.balanceOf(bidProfitBeneficiary)))
+        console.log("\tuser1: ", f8(await touch.balanceOf(user1)))
+        console.log("\tuser2: ", f8(await touch.balanceOf(user2)))
+        console.log("\tuser3: ", f8(await touch.balanceOf(user3)))
+        console.log("\tevent contract: ", f8(await touch.balanceOf(eventContract.address)))
+        console.log("\tplatform profit: ", f8(await touch.balanceOf(bidProfitBeneficiary)))
     }
 
     const renewEventContract = async function () {
@@ -153,7 +161,7 @@ contract('test', function(accounts) {
 
     it("go through", async function () {
         usdt = await DSToken.new("0x444600000000000000000000000000", 6)
-        touch = await DSToken.new("0x444600000000000000000000000000", 6)
+        touch = await DSToken.new("0x444600000000000000000000000000", 8)
         lendFMe = await LendFMe.new()
         staker = await Staker.new()
         tx = staker.active(touch.address, usdt.address, lendFMe.address)
@@ -172,7 +180,7 @@ contract('test', function(accounts) {
         tx = await usdt.mint(user12, d6(5000))
         tx = await usdt.mint(user13, d6(5000))
         tx = await usdt.mint(user14, d6(5000))
-        tx = await touch.mint(staker.address, d6(922223))
+        tx = await touch.mint(staker.address, d8(922223))
 
         tx = await usdt.approvex(staker.address, {from: user1})
         tx = await usdt.approvex(staker.address, {from: user2})
@@ -193,52 +201,52 @@ contract('test', function(accounts) {
         console.log("** init")
         console.log("user1")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user1)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user1)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user1)))
         console.log("user2")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user2)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user2)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user2)))
         console.log("user3")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user3)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user3)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user3)))
         console.log("user4")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user4)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user4)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user4)))
         console.log("user5")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user5)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user5)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user5)))
         console.log("user6")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user6)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user6)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user6)))
         console.log("user7")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user7)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user7)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user7)))
         console.log("user8")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user8)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user8)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user8)))
         console.log("user9")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user9)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user9)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user9)))
         console.log("user10")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user10)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user10)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user10)))
         console.log("user11")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user11)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user11)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user11)))
         console.log("user12")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user12)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user12)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user12)))
         console.log("user13")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user13)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user13)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user13)))
         console.log("user14")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(user14)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(user14)))
+        console.log("\ttouch balance:", f8(await touch.balanceOf(user14)))
         console.log("staker")
         console.log("\tusdt balance:", f6(await usdt.balanceOf(staker.address)))
-        console.log("\ttouch balance:", f6(await touch.balanceOf(staker.address))) 
+        console.log("\ttouch balance:", f8(await touch.balanceOf(staker.address))) 
         console.log("\tstaker's total usdt balance (including in Defi):", f6(await staker.tokenBalance()))
 
-        tx = await staker.setTouchPrice(12500)
+        tx = await staker.setTouchPrice(125)
         tx = await staker.deposit(d6(500), 1, user1, {from: user1})
         await showBalance("user1 deposit 500 for 1 month", user1)
 
@@ -321,19 +329,19 @@ contract('test', function(accounts) {
         await showEventStatus("start a new event with 4 options")
 
         // user1 like option1
-        tx = await eventContract.userLikeGirl(0, d6(100), {from: user1})
+        tx = await eventContract.userLikeGirl(0, d8(100), {from: user1})
         await showEventStatus("user1 like option 0 with 1 LIKE (100 touch)")
 
         // user3 like option1
-        tx = await eventContract.userLikeGirl(0, d6(200), {from: user3})
+        tx = await eventContract.userLikeGirl(0, d8(200), {from: user3})
         await showEventStatus("user3 like option 0 with 2 LIKE (200 touch)")
 
         // user2 bid option 1
-        tx = await eventContract.userBidGirl(1, d6(110), {from: user2})
+        tx = await eventContract.userBidGirl(1, d8(110), {from: user2})
         await showEventStatus("user2 bid option 1 with 110 touch")
 
         // user3 bid option 1
-        tx = await eventContract.userBidGirl(1, d6(1000), {from: user3})
+        tx = await eventContract.userBidGirl(1, d8(1000), {from: user3})
         await showEventStatus("user3 bid option 1 wtih 1000 touch")
 
         // end like

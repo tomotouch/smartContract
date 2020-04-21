@@ -36,7 +36,7 @@ interface ILendFMe {
 contract Staker is DSAuth {
 	using DSMath for uint256;
 
-	uint256 constant TOUCHDECIMAL = 6;
+	uint256 constant TOUCHDECIMAL = 8;
 	uint256 constant STABLEDECIMAL = 6;
 
 	address public touchToken;
@@ -107,6 +107,8 @@ contract Staker is DSAuth {
 	function withdraw(address _user, uint256 _withdrawId) external {
 		DepositInfo memory depositInfo = deposits[_user][_withdrawId];
 		require(depositInfo.amount > 0, "the deposit has already withdrawed or not exist");
+		require(getTime() >= depositInfo.startTime.add(depositInfo.period * 30 days) || 
+			_user == msg.sender, "the stake is not ended, must withdraw by owner");
 		principle = principle.sub(depositInfo.amount);
 		uint256 shouldPayToUser = calRealIntrest(_user, _withdrawId);
 		depositInfo.amount = 0;
@@ -154,7 +156,7 @@ contract Staker is DSAuth {
 
 	function getWithdrawAmountEstimate(address _user, uint256 _withdrawId) public view returns (uint256) {
 		return calRealIntrest(_user, _withdrawId);
-	} 
+	}
 
 	// admin 
 	function setTouchPrice(uint256 _price) external auth { 
@@ -193,7 +195,7 @@ contract Staker is DSAuth {
 		if (getTime() >= depositInfo.startTime.add(depositInfo.period * 30 days)) {
 			return depositInfo.amount;
 		} else {
-			require(_user == msg.sender, "the stake is not ended, must withdraw by owner");
+			//require(_user == msg.sender, "the stake is not ended, must withdraw by owner");
 			uint256 shouldCalculatedDays = depositInfo.startTime.add(depositInfo.period * 30 days).sub(depositInfo.startTime).sub(1 days).div(1 days);
 			// APR 2.9% --> daily 0.00794521%
 			uint256 _instrest = depositInfo.amount.mul(794521).mul(shouldCalculatedDays).div(10 ** 10);
