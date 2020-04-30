@@ -156,9 +156,9 @@ contract('test', function(accounts) {
 
     const renewEventContract = async function () {
         eventContract = await EventContract.new(touch.address);
-        tx = await touch.approvex(eventContract.address, {from: user1})
-        tx = await touch.approvex(eventContract.address, {from: user2})
-        tx = await touch.approvex(eventContract.address, {from: user3})
+        tx = await touch.approve(eventContract.address, d8(9999999), {from: user1})
+        tx = await touch.approve(eventContract.address, d8(9999999), {from: user2})
+        tx = await touch.approve(eventContract.address, d8(9999999), {from: user3})
         tx = await eventContract.setBidProfitBeneficiary(bidProfitBeneficiary)
     }
 

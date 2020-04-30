@@ -40,7 +40,7 @@ contract Staker is DSAuth {
 
 	uint256 constant TOUCHDECIMAL = 8;
 	uint256 constant STABLEDECIMAL = 6;
-	uint256 constant MAXMALDEPOSIT = 10000 * (10 ** STABLEDECIMAL);
+	uint256 constant MAXMALDEPOSIT = 100000 * (10 ** STABLEDECIMAL);
 
 	address public touchToken;
 	address public stableCoin;
@@ -76,7 +76,7 @@ contract Staker is DSAuth {
 		touchToken = _touch;
 		stableCoin = _stable;
 		compound = _compound;
-		IERC20(_stable).approve(_compound, uint256(-1));
+		NonStandardIERC20Token(_stable).approve(_compound, uint256(-1));
 		touchPrice = 10 ** STABLEDECIMAL;
 	}
 
@@ -103,7 +103,7 @@ contract Staker is DSAuth {
 		// check intrest in stable coin
 		uint256 _equaledUSD = calIntrest(_amount, _period);
 		uint256 _touchToUser = _equaledUSD.mul(10 ** 8).div(touchPrice);
-		IERC20(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
+		NonStandardIERC20Token(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
 
 		emit userDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
 	}
@@ -188,13 +188,13 @@ contract Staker is DSAuth {
 	function withdrawProfit() external onlyOwner {
 		uint256 _profit = getProfit();
 		CErc20(compound).redeemUnderlying(_profit);
-		IERC20(stableCoin).transfer(msg.sender, _profit);
+		NonStandardIERC20Token(stableCoin).transfer(msg.sender, _profit);
 	}
 
 	function emergencyWithdraw() external onlyOwner {
 		uint256 amount = IERC20(compound).balanceOf(address(this));
 		CErc20(compound).redeem(amount);
-		IERC20(stableCoin).transfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
+		NonStandardIERC20Token(stableCoin).transfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
 	}
 
 	// internal
@@ -248,12 +248,12 @@ contract Staker is DSAuth {
 
 	function sendToUser(address _user, uint256 _amount) internal {
 		CErc20(compound).redeemUnderlying(_amount);
-		IERC20(stableCoin).transfer(_user, _amount);
+		NonStandardIERC20Token(stableCoin).transfer(_user, _amount);
 		emit userWithdraw(_user, _amount, block.timestamp);
 	}
 
 	function getFromUser(uint256 _amount) internal	{
-		IERC20(stableCoin).transferFrom(msg.sender, address(this), _amount);
+		NonStandardIERC20Token(stableCoin).transferFrom(msg.sender, address(this), _amount);
 		CErc20(compound).mint(_amount);
 	}
 }

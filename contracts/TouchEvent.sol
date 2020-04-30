@@ -72,7 +72,7 @@ contract TouchEvent is DSAuth{
 		Event memory event_ = events[eventCounts];
 		require(!isLikeEnded, "like is ended");
 		require(_optionId <= event_.options, "the option is not exist");
-		IERC20(touchToken).transferFrom(msg.sender, address(this), _amounts);
+		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
 
 		Option memory option_ = options[eventCounts][_optionId];
 		option_.likes = option_.likes.add(_amounts);
@@ -107,8 +107,8 @@ contract TouchEvent is DSAuth{
 		}
 
 		uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
-		IERC20(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
-		IERC20(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
+		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
+		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
 		emit Outbid(event_.firstBidder);
 		event_.firstBidder = msg.sender;
 		event_.firstBid = _price;
@@ -119,7 +119,7 @@ contract TouchEvent is DSAuth{
 	function addTouchToLikeRewardPool(uint256 _amounts) external {
 		require(!isLikeEnded, "like is ended");
 		Event memory event_ = events[eventCounts];
-		IERC20(touchToken).transferFrom(msg.sender, address(this), _amounts);
+		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
 		event_.totalLikedRewards = event_.totalLikedRewards.add(_amounts);
 
 		events[eventCounts] = event_;
@@ -137,7 +137,7 @@ contract TouchEvent is DSAuth{
 
 		// send reward and set withdrawed
 		likeRewardIsWithdrawed[_eventId][_user] = true;
-		IERC20(touchToken).transfer(_user, reward);
+		NonStandardIERC20Token(touchToken).transfer(_user, reward);
 	}
 
 	// getting function 
@@ -195,7 +195,7 @@ contract TouchEvent is DSAuth{
 
 		// send reward to winner
 		uint256 reward = event_.totalLikedRewards.mul(30).div(100);
-		IERC20(touchToken).transfer(_winner, reward);
+		NonStandardIERC20Token(touchToken).transfer(_winner, reward);
 		event_.totalLikedRewards = event_.totalLikedRewards.sub(reward);
 
 		events[eventCounts] = event_;
