@@ -5,8 +5,10 @@ const DSAuth = artifacts.require('DSAuth')
 const TouchEvent = artifacts.require('TouchEvent')
 const DSToken = artifacts.require("DSToken")
 const DSGuard = artifacts.require("DSGuard")
-const LendFMe = artifacts.require("FakeLendFMe")
+//const LendFMe = artifacts.require("FakeLendFMe")
+const Compound = artifacts.require("FakeCompound")
 const EventContract = artifacts.require("TouchEvent")
+const Touch = artifacts.require("TOUCH")
 
 
 contract('test', function(accounts) {
@@ -26,9 +28,10 @@ contract('test', function(accounts) {
     const user13 = accounts[13]
     const user14 = accounts[14]
     const bidProfitBeneficiary = accounts[15]
+    const winner = accounts[16]
 
     let tx, currentTime
-    let lendFMe, staker, eventContract 
+    let compound, staker, eventContract 
     let usdt, touch
 
     const d18 = function (amount) {
@@ -109,7 +112,7 @@ contract('test', function(accounts) {
         console.log("** " + note)
         console.log("referredCount: ", _account.referredCount.toString())
         console.log("referredAmount: ", f6(_account.referredAmount).toString())
-        console.log("referredMilestoneAchived: ", f8(_account.referredMilestoneAchived).toString())
+        console.log("referredMilestoneAchived: ", f6(_account.referredMilestoneAchived).toString())
         console.log("rewards: ", f8(_account.rewards).toString())
         console.log("is referalName paid: ", _account.isReferalNamePaid)
     }
@@ -161,10 +164,10 @@ contract('test', function(accounts) {
 
     it("go through", async function () {
         usdt = await DSToken.new("0x444600000000000000000000000000", 6)
-        touch = await DSToken.new("0x444600000000000000000000000000", 8)
-        lendFMe = await LendFMe.new()
+        touch = await Touch.new(1000000000)
+        compound = await Compound.new(usdt.address)
         staker = await Staker.new()
-        tx = staker.active(touch.address, usdt.address, lendFMe.address)
+        tx = staker.active(touch.address, usdt.address, compound.address)
 
         tx = await usdt.mint(user1, d6(1000))
         tx = await usdt.mint(user2, d6(1000))
@@ -180,7 +183,7 @@ contract('test', function(accounts) {
         tx = await usdt.mint(user12, d6(5000))
         tx = await usdt.mint(user13, d6(5000))
         tx = await usdt.mint(user14, d6(5000))
-        tx = await touch.mint(staker.address, d8(922223))
+        tx = await touch.transfer(staker.address, d8(922223))
 
         tx = await usdt.approvex(staker.address, {from: user1})
         tx = await usdt.approvex(staker.address, {from: user2})
@@ -246,14 +249,14 @@ contract('test', function(accounts) {
         console.log("\ttouch balance:", f8(await touch.balanceOf(staker.address))) 
         console.log("\tstaker's total usdt balance (including in Defi):", f6(await staker.tokenBalance()))
 
-        tx = await staker.setTouchPrice(125)
+        tx = await staker.setTouchPrice(12500)
         tx = await staker.deposit(d6(500), 1, user1, {from: user1})
         await showBalance("user1 deposit 500 for 1 month", user1)
 
         tx = await staker.deposit(d6(500), 2, user2, {from: user2})
         await showBalance("user2 deposit 500 for 2 month", user2)
 
-        tx = await touch.approvex(staker.address, {from: user2})
+        tx = await touch.approve(staker.address, d8(9999999), {from: user2})
         tx = await staker.payForReferalName({from: user2})
         await showBalance("user2 registered a name", user2)
         await showReferalInfo("user2 registered a name", user2)
@@ -345,7 +348,7 @@ contract('test', function(accounts) {
         await showEventStatus("user3 bid option 1 wtih 1000 touch")
 
         // end like
-        tx = await eventContract.setLikeEnded()
+        tx = await eventContract.setLikeEnded(winner)
         await showEventStatus("like ended")
 
         // end bid

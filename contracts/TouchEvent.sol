@@ -187,7 +187,7 @@ contract TouchEvent is DSAuth{
 		events[eventCounts] = Event(eventCounts, _optionCounts, 0, 0, 0, 0, 0, address(0));
 	}
 
-	function setLikeEnded() external auth {
+	function setLikeEnded(address _winner) external auth {
 		isLikeEnded = true;
 
 		Event memory event_ = events[eventCounts];
@@ -195,7 +195,7 @@ contract TouchEvent is DSAuth{
 
 		// send reward to winner
 		uint256 reward = event_.totalLikedRewards.mul(30).div(100);
-		IERC20(touchToken).transfer(bidProfitBeneficiary, reward);
+		IERC20(touchToken).transfer(_winner, reward);
 		event_.totalLikedRewards = event_.totalLikedRewards.sub(reward);
 
 		events[eventCounts] = event_;

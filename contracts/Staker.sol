@@ -27,10 +27,12 @@ library DSMath {
     }
 }
 
-interface ILendFMe {
-	function supply(address _token, uint _amounts) external returns (uint);
-	function withdraw(address _token, uint _amounts) external returns (uint);
-	function getSupplyBalance(address _user, address _token) external view returns (uint256);
+interface CErc20 {
+	function balanceOf(address _owner) external view returns (uint);
+	function mint(uint mintAmount) external returns (uint);
+	function redeemUnderlying(uint redeemAmount) external returns (uint);
+	function redeem(uint redeemAmount) external returns (uint);
+	function exchangeRateStored() external view returns (uint);
 }
 
 contract Staker is DSAuth {
@@ -38,10 +40,11 @@ contract Staker is DSAuth {
 
 	uint256 constant TOUCHDECIMAL = 8;
 	uint256 constant STABLEDECIMAL = 6;
+	uint256 constant MAXMALDEPOSIT = 10000 * (10 ** STABLEDECIMAL);
 
 	address public touchToken;
 	address public stableCoin;
-	address public lendFMe;
+	address public compound;
 	uint256 public touchPrice; // offset 10 ** 6
 	uint256 public principle;
 	bool public actived; 
@@ -67,19 +70,20 @@ contract Staker is DSAuth {
 	event userDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
     event userWithdraw(address indexed sender, uint256 value, uint256 timestamp);
 
-	function active(address _touch, address _stable, address _lendFMe) public {
+	function active(address _touch, address _stable, address _compound) public {
 		require(!actived, "contract has alreadt actived");
 		actived = true;
 		touchToken = _touch;
 		stableCoin = _stable;
-		lendFMe = _lendFMe;
-		IERC20(_stable).approve(_lendFMe, uint256(-1));
+		compound = _compound;
+		IERC20(_stable).approve(_compound, uint256(-1));
 		touchPrice = 10 ** STABLEDECIMAL;
 	}
 
 	function deposit(uint256 _amount, uint256 _period, address _referrer) external {
 		require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
 		require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
+		require(getUserTotalDepositAmount(msg.sender).add(_amount) <= MAXMALDEPOSIT, "deposit too more per user.");
 
 		getFromUser(_amount);
 		userDepositsCounts[msg.sender] += 1;
@@ -98,7 +102,7 @@ contract Staker is DSAuth {
 
 		// check intrest in stable coin
 		uint256 _equaledUSD = calIntrest(_amount, _period);
-		uint256 _touchToUser = _equaledUSD.mul(10 ** 6).div(touchPrice);
+		uint256 _touchToUser = _equaledUSD.mul(10 ** 8).div(touchPrice);
 		IERC20(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
 
 		emit userDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
@@ -136,7 +140,8 @@ contract Staker is DSAuth {
 
 	// getter function
 	function tokenBalance() public view returns (uint256) {
-		uint256 balanceInDefi = ILendFMe(lendFMe).getSupplyBalance(address(this), stableCoin);
+		uint256 balanceInDefi = CErc20(compound).balanceOf(address(this)).mul(CErc20(compound).exchangeRateStored());
+		balanceInDefi = balanceInDefi / (10 ** 18);
 		uint256 contractBalance = IERC20(stableCoin).balanceOf(address(this));
 		return balanceInDefi.add(contractBalance);
 	}
@@ -158,6 +163,22 @@ contract Staker is DSAuth {
 		return calRealIntrest(_user, _withdrawId);
 	}
 
+	function getInterestEstimate(uint256 _amount, uint256 _period) public view returns (uint256) {
+		return calIntrest(_amount, _period);
+	}
+
+	function getUserTotalDepositAmount(address _user) public view returns (uint256) {
+		uint256 depositsCounts = userDepositsCounts[_user];
+		if(depositsCounts == 0) {
+			return 0;
+		}
+		uint256 sum = 0;
+		for(uint256 i = 0; i < depositsCounts; i++) {
+			sum = sum.add(deposits[_user][i].amount);
+		}
+		return sum;
+	}
+
 	// admin 
 	function setTouchPrice(uint256 _price) external auth { 
 		touchPrice = _price;
@@ -166,12 +187,13 @@ contract Staker is DSAuth {
 	// owner
 	function withdrawProfit() external onlyOwner {
 		uint256 _profit = getProfit();
-		ILendFMe(lendFMe).withdraw(stableCoin, _profit);
+		CErc20(compound).redeemUnderlying(_profit);
 		IERC20(stableCoin).transfer(msg.sender, _profit);
 	}
 
 	function emergencyWithdraw() external onlyOwner {
-		ILendFMe(lendFMe).withdraw(stableCoin, uint256(-1));
+		uint256 amount = IERC20(compound).balanceOf(address(this));
+		CErc20(compound).redeem(amount);
 		IERC20(stableCoin).transfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
 	}
 
@@ -219,20 +241,19 @@ contract Staker is DSAuth {
  		_account.referredAmount += _amount;
  		while(_account.referredAmount >= _account.referredMilestoneAchived + 10000 * (10 ** STABLEDECIMAL)) {
  			_account.referredMilestoneAchived += 10000 * (10 ** STABLEDECIMAL);
- 			_account.rewards += (800 + 200 * (_account.referredMilestoneAchived / (10000 * (10 ** STABLEDECIMAL)))) * (10 ** STABLEDECIMAL);
+ 			_account.rewards += (800 + 200 * (_account.referredMilestoneAchived / (10000 * (10 ** STABLEDECIMAL)))) * (10 ** TOUCHDECIMAL);
  		}
  		return _account;
 	}
 
 	function sendToUser(address _user, uint256 _amount) internal {
-		ILendFMe(lendFMe).withdraw(stableCoin, _amount);
+		CErc20(compound).redeemUnderlying(_amount);
 		IERC20(stableCoin).transfer(_user, _amount);
-		principle -= _amount;
 		emit userWithdraw(_user, _amount, block.timestamp);
 	}
 
 	function getFromUser(uint256 _amount) internal	{
 		IERC20(stableCoin).transferFrom(msg.sender, address(this), _amount);
-		ILendFMe(lendFMe).supply(stableCoin, _amount);
+		CErc20(compound).mint(_amount);
 	}
 }

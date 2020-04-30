@@ -21,6 +21,7 @@ contract('test', function(accounts) {
     const user8 = accounts[8]
     const user9 = accounts[9]
     const bidProfitBeneficiary = accounts[10]
+    const winner = accounts[11]
 
     let tx, currentTime
     let lendFMe, staker, eventContract 
@@ -197,7 +198,7 @@ contract('test', function(accounts) {
         await showEventStatus("user9 like option 2 with 10 LIKE (1000 touch)")
 
         // end like
-        tx = await eventContract.setLikeEnded()
+        tx = await eventContract.setLikeEnded(winner)
         await showEventStatus("like ended")
         await showDistributedResult(1, "distributed result")
 
