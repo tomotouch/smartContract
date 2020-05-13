@@ -100,7 +100,7 @@ contract TouchEvent is DSAuth{
 		require(!isBidEnded, "bid is ended");
 		require(_optionId <= event_.options, "the option is not exist");
 		require(msg.sender != event_.firstBidder, "the sender is already the top bidder");
-		require(_price > event_.firstBid.mul(110).div(100), "must exceed the last bid more than 10%");
+		require(_price >= event_.firstBid.mul(110).div(100), "must exceed the last bid more than 10%");
 		
 		if (event_.firstBidder == address(0)) {
 			event_.firstBidder = bidProfitBeneficiary;

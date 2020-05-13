@@ -256,11 +256,6 @@ contract('test', function(accounts) {
         tx = await staker.deposit(d6(500), 2, user2, {from: user2})
         await showBalance("user2 deposit 500 for 2 month", user2)
 
-        tx = await touch.approve(staker.address, d8(9999999), {from: user2})
-        tx = await staker.payForReferalName({from: user2})
-        await showBalance("user2 registered a name", user2)
-        await showReferalInfo("user2 registered a name", user2)
-
         tx = await staker.deposit(d6(1000), 3, user2, {from: user3})
         await showBalance("user3 deposit 1000 for 3 month", user3)
         await showReferalInfo("user2 get referred from the last deposit", user2)

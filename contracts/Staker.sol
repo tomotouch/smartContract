@@ -60,7 +60,6 @@ contract Staker is DSAuth {
 		uint256 referredAmount;
 		uint256 referredMilestoneAchived;
 		uint256 rewards;
-		bool isReferalNamePaid;
 	}
 
 	mapping (address => mapping (uint256 => DepositInfo)) public deposits;
@@ -111,6 +110,7 @@ contract Staker is DSAuth {
 	function withdraw(address _user, uint256 _withdrawId) external {
 		DepositInfo memory depositInfo = deposits[_user][_withdrawId];
 		require(depositInfo.amount > 0, "the deposit has already withdrawed or not exist");
+		require(getTime() >= depositInfo.startTime.add(1 days), "must deposit more than 1 days");
 		require(getTime() >= depositInfo.startTime.add(depositInfo.period * 30 days) || 
 			_user == msg.sender, "the stake is not ended, must withdraw by owner");
 		principle = principle.sub(depositInfo.amount);
@@ -128,14 +128,6 @@ contract Staker is DSAuth {
 		_account.rewards = 0;
 		accounts[_user] = _account;
 		IERC20(touchToken).transfer(_user, _amount);
-	}
-
-	function payForReferalName() external {
-		Account memory _account = accounts[msg.sender];
-		require(_account.isReferalNamePaid == false, "referal name is paid");
-		IERC20(touchToken).transferFrom(msg.sender, address(this), 50 * (10 ** TOUCHDECIMAL));
-		_account.isReferalNamePaid = true;
-		accounts[msg.sender] = _account;
 	}
 
 	// getter function
@@ -173,7 +165,7 @@ contract Staker is DSAuth {
 			return 0;
 		}
 		uint256 sum = 0;
-		for(uint256 i = 0; i < depositsCounts; i++) {
+		for(uint256 i = 0; i <= depositsCounts; i++) {
 			sum = sum.add(deposits[_user][i].amount);
 		}
 		return sum;
@@ -218,7 +210,7 @@ contract Staker is DSAuth {
 			return depositInfo.amount;
 		} else {
 			//require(_user == msg.sender, "the stake is not ended, must withdraw by owner");
-			uint256 shouldCalculatedDays = depositInfo.startTime.add(depositInfo.period * 30 days).sub(depositInfo.startTime).sub(1 days).div(1 days);
+			uint256 shouldCalculatedDays = depositInfo.startTime.add(depositInfo.period * 30 days).sub(depositInfo.startTime).div(1 days);
 			// APR 2.9% --> daily 0.00794521%
 			uint256 _instrest = depositInfo.amount.mul(794521).mul(shouldCalculatedDays).div(10 ** 10);
 			uint256 shouldRepayToUser = depositInfo.amount.add(_instrest).sub(calIntrest(depositInfo.amount, depositInfo.period));
