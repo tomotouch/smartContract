@@ -210,7 +210,7 @@ contract Staker is DSAuth {
 			return depositInfo.amount;
 		} else {
 			//require(_user == msg.sender, "the stake is not ended, must withdraw by owner");
-			uint256 shouldCalculatedDays = depositInfo.startTime.add(depositInfo.period * 30 days).sub(depositInfo.startTime).div(1 days);
+			uint256 shouldCalculatedDays = getTime().sub(depositInfo.startTime).div(1 days);
 			// APR 2.9% --> daily 0.00794521%
 			uint256 _instrest = depositInfo.amount.mul(794521).mul(shouldCalculatedDays).div(10 ** 10);
 			uint256 shouldRepayToUser = depositInfo.amount.add(_instrest).sub(calIntrest(depositInfo.amount, depositInfo.period));

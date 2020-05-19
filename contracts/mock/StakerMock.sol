@@ -12,4 +12,12 @@ contract StakerMock is Staker {
 	function setTime(uint256 __time) public {
 		_time = __time;
 	}
+
+	function forward1day() public {
+		_time = _time + 1 days;
+	}
+
+	function forward10days() public {
+		_time = _time + 10 days;
+	}
 }

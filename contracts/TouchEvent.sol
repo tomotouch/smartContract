@@ -45,7 +45,7 @@ contract TouchEvent is DSAuth{
 	mapping(uint256 => mapping(address => bool)) public likeRewardIsWithdrawed;
 
 	event EventEnds(string eventName); // array of vote winners
-	event Outbid(address previousBidder);
+	event Outbid(address previousBidder, uint256 optionId);
 
 	struct Event {
 		uint256 eventId;
@@ -109,7 +109,7 @@ contract TouchEvent is DSAuth{
 		uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
-		emit Outbid(event_.firstBidder);
+		emit Outbid(event_.firstBidder, _optionId);
 		event_.firstBidder = msg.sender;
 		event_.firstBid = _price;
 		event_.currentOption = _optionId;
