@@ -67,7 +67,7 @@ contract Staker is DSAuth {
 	mapping (address => Account) public accounts;
 
 	event UserDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
-    event UserWithdraw(address indexed sender, uint256 value, uint256 withdrawId, uint256 timestamp);
+    event UserWithdraw(address indexed sender, uint256 depositAmount, uint256 value, uint256 withdrawId, uint256 timestamp);
 
 	function active(address _touch, address _stable, address _compound) public {
 		require(!actived, "contract has alreadt actived");
@@ -113,12 +113,13 @@ contract Staker is DSAuth {
 		require(getTime() >= depositInfo.startTime.add(1 days), "must deposit more than 1 days");
 		require(getTime() >= depositInfo.startTime.add(depositInfo.period * 30 days) || 
 			_user == msg.sender, "the stake is not ended, must withdraw by owner");
+		uint256 depositAmount = depositInfo.amount;
 		principle = principle.sub(depositInfo.amount);
 		uint256 shouldPayToUser = calRealIntrest(_user, _withdrawId);
 		depositInfo.amount = 0;
 		deposits[_user][_withdrawId] = depositInfo;
 		sendToUser(_user, shouldPayToUser);
-		emit UserWithdraw(_user, shouldPayToUser, _withdrawId, block.timestamp);
+		emit UserWithdraw(_user, depositAmount, shouldPayToUser, _withdrawId, block.timestamp);
 	}
 
 	function claimReferalReward(address _user) external {
