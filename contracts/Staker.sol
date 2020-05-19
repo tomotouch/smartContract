@@ -66,8 +66,8 @@ contract Staker is DSAuth {
 	mapping (address => uint256) public userDepositsCounts;
 	mapping (address => Account) public accounts;
 
-	event userDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
-    event userWithdraw(address indexed sender, uint256 value, uint256 timestamp);
+	event UserDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
+    event UserWithdraw(address indexed sender, uint256 value, uint256 withdrawId, uint256 timestamp);
 
 	function active(address _touch, address _stable, address _compound) public {
 		require(!actived, "contract has alreadt actived");
@@ -104,7 +104,7 @@ contract Staker is DSAuth {
 		uint256 _touchToUser = _equaledUSD.mul(10 ** 8).div(touchPrice);
 		NonStandardIERC20Token(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
 
-		emit userDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
+		emit UserDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
 	}
 
 	function withdraw(address _user, uint256 _withdrawId) external {
@@ -118,7 +118,7 @@ contract Staker is DSAuth {
 		depositInfo.amount = 0;
 		deposits[_user][_withdrawId] = depositInfo;
 		sendToUser(_user, shouldPayToUser);
-		//emit UserWithdraw(_user, shouldPayToUser, block.timestamp);
+		emit UserWithdraw(_user, shouldPayToUser, _withdrawId, block.timestamp);
 	}
 
 	function claimReferalReward(address _user) external {
@@ -127,7 +127,7 @@ contract Staker is DSAuth {
 		uint256 _amount = _account.rewards;
 		_account.rewards = 0;
 		accounts[_user] = _account;
-		IERC20(touchToken).transfer(_user, _amount);
+		NonStandardIERC20Token(touchToken).transfer(_user, _amount);
 	}
 
 	// getter function
@@ -241,7 +241,6 @@ contract Staker is DSAuth {
 	function sendToUser(address _user, uint256 _amount) internal {
 		CErc20(compound).redeemUnderlying(_amount);
 		NonStandardIERC20Token(stableCoin).transfer(_user, _amount);
-		emit userWithdraw(_user, _amount, block.timestamp);
 	}
 
 	function getFromUser(uint256 _amount) internal	{

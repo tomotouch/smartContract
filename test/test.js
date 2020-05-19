@@ -307,6 +307,11 @@ contract('test', function(accounts) {
         await showBalance("user14 deposit 5000 for 1 month", user14)
         await showReferalInfo("user2 get referred from the last deposit", user2)
 
+        // user2 get referral
+        await showBalance("before user2 claim bonus", user2)
+        tx = await staker.claimReferalReward(user2, {from: user2})
+        await showBalance("after user2 claim bonus", user2)
+
         // set time to one month
         currentTime = await staker.getTime();
         tx = await staker.setTime(currentTime + (60 * 60 * 24 * 50 + 1));

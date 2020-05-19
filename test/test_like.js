@@ -201,6 +201,5 @@ contract('test', function(accounts) {
         tx = await eventContract.setLikeEnded(winner)
         await showEventStatus("like ended")
         await showDistributedResult(1, "distributed result")
-
     });
 });
