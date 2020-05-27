@@ -133,7 +133,7 @@ contract TouchEvent is DSAuth{
 		require(eventIsLikeEnded(_eventId), "event like is not ended");
 
 		// check available like reward
-		Event memory event_ = events[eventCounts];
+		Event memory event_ = events[_eventId];
 		require(likeRewardIsWithdrawed[_eventId][_user], "reward is withdrawed");
 		uint256 reward = getLikedRewardAmount(_eventId, _user);
 		require(reward > 0, "user has no reward");
