@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import './IERC20.sol';
+import './ReentrancyGuard.sol';
 import './DSLibrary/DSAuth.sol';
 
 library DSMath {
@@ -35,7 +36,7 @@ interface CErc20 {
 	function exchangeRateStored() external view returns (uint);
 }
 
-contract Staker is DSAuth {
+contract Staker is DSAuth, ReentrancyGuard {
 	using DSMath for uint256;
 
 	uint256 constant TOUCHDECIMAL = 8;
@@ -48,6 +49,7 @@ contract Staker is DSAuth {
 	uint256 public touchPrice; // offset 10 ** 6
 	uint256 public principle;
 	bool public actived; 
+	bool public isStop;
 
 	struct DepositInfo {
 		uint256 amount;
@@ -62,12 +64,18 @@ contract Staker is DSAuth {
 		uint256 rewards;
 	}
 
+	modifier nonStopped() {
+		require (!isStop, "contarct is stopped");
+		_;
+	}
+
 	mapping (address => mapping (uint256 => DepositInfo)) public deposits;
 	mapping (address => uint256) public userDepositsCounts;
 	mapping (address => Account) public accounts;
 
 	event UserDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
     event UserWithdraw(address indexed sender, uint256 depositAmount, uint256 value, uint256 withdrawId, uint256 timestamp);
+	event ClaimReferral(address indexed sender, uint256 touchAmount, uint256 timestamp);
 
 	function active(address _touch, address _stable, address _compound) public {
 		require(!actived, "contract has alreadt actived");
@@ -79,7 +87,7 @@ contract Staker is DSAuth {
 		touchPrice = 10 ** STABLEDECIMAL;
 	}
 
-	function deposit(uint256 _amount, uint256 _period, address _referrer) external {
+	function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant nonStopped {
 		require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
 		require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
 		require(getUserTotalDepositAmount(msg.sender).add(_amount) <= MAXMALDEPOSIT, "deposit too more per user.");
@@ -107,7 +115,7 @@ contract Staker is DSAuth {
 		emit UserDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
 	}
 
-	function withdraw(address _user, uint256 _withdrawId) external {
+	function withdraw(address _user, uint256 _withdrawId) external nonReentrant nonStopped {
 		DepositInfo memory depositInfo = deposits[_user][_withdrawId];
 		require(depositInfo.amount > 0, "the deposit has already withdrawed or not exist");
 		require(getTime() >= depositInfo.startTime.add(1 days), "must deposit more than 1 days");
@@ -119,16 +127,17 @@ contract Staker is DSAuth {
 		depositInfo.amount = 0;
 		deposits[_user][_withdrawId] = depositInfo;
 		sendToUser(_user, shouldPayToUser);
-		emit UserWithdraw(_user, depositAmount, shouldPayToUser, _withdrawId, block.timestamp);
+		emit UserWithdraw(_user, depositAmount, shouldPayToUser, _withdrawId, getTime());
 	}
 
-	function claimReferalReward(address _user) external {
+	function claimReferalReward(address _user) external nonReentrant nonStopped{
 		Account memory _account = accounts[_user];
 		require(_account.rewards != 0, "user has no rewards");
 		uint256 _amount = _account.rewards;
 		_account.rewards = 0;
 		accounts[_user] = _account;
 		NonStandardIERC20Token(touchToken).transfer(_user, _amount);
+		emit ClaimReferral(msg.sender, _amount, getTime());
 	}
 
 	// getter function
@@ -188,6 +197,10 @@ contract Staker is DSAuth {
 		uint256 amount = IERC20(compound).balanceOf(address(this));
 		CErc20(compound).redeem(amount);
 		NonStandardIERC20Token(stableCoin).transfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
+	}
+
+	function emergencyStop() external onlyOwner {
+		isStop = !isStop;
 	}
 
 	// internal

@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
 import './IERC20.sol';
+import './ReentrancyGuard.sol';
 import './DSLibrary/DSAuth.sol';
 
 library DSMath {
@@ -27,7 +28,7 @@ library DSMath {
     }
 }
 
-contract TouchEvent is DSAuth{
+contract TouchEvent is DSAuth, ReentrancyGuard{
 	using DSMath for uint256;
 
 	address public touchToken;
@@ -45,8 +46,8 @@ contract TouchEvent is DSAuth{
 	mapping(uint256 => mapping(address => bool)) public likeRewardIsWithdrawed;
 
 	event EventEnds(string eventName); // array of vote winners
-	event Outbid(address previousBidder, uint256 optionId, uint256 newBidPrice, uint256 prizeToPreviousBidder);
-	event Liked(uint256 optionId, uint256 amounts);
+	event Outbid(address indexed sender, address indexed previousBidder, uint256 optionId, uint256 newBidPrice, uint256 prizeToPreviousBidder, uint256 timestamp);
+	event Liked(uint256 optionId, uint256 amounts, uint256 timestamp, address indexed sender);
 
 	struct Event {
 		uint256 eventId;
@@ -69,7 +70,7 @@ contract TouchEvent is DSAuth{
 		bidProfitBeneficiary = msg.sender;
 	}
 
-	function userLikeGirl(uint256 _optionId, uint256 _amounts) external {
+	function userLikeGirl(uint256 _optionId, uint256 _amounts) external nonReentrant {
 		Event memory event_ = events[eventCounts];
 		require(!isLikeEnded, "like is ended");
 		require(_optionId <= event_.options, "the option is not exist");
@@ -95,10 +96,10 @@ contract TouchEvent is DSAuth{
 		options[eventCounts][_optionId] = option_;
 		events[eventCounts] = event_;
 
-		emit Liked(_optionId, _amounts);
+		emit Liked(_optionId, _amounts, now, msg.sender);
 	}
 
-	function userBidGirl(uint256 _optionId, uint256 _price) external {
+	function userBidGirl(uint256 _optionId, uint256 _price) external nonReentrant {
 		Event memory event_ = events[eventCounts];
 		require(!isBidEnded, "bid is ended");
 		require(_optionId <= event_.options, "the option is not exist");
@@ -112,14 +113,14 @@ contract TouchEvent is DSAuth{
 		uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
-		emit Outbid(event_.firstBidder, _optionId, _price, _price.sub(_amountsToOwner));
+		emit Outbid(msg.sender, event_.firstBidder, _optionId, _price, _price.sub(_amountsToOwner), now);
 		event_.firstBidder = msg.sender;
 		event_.firstBid = _price;
 		event_.currentOption = _optionId;
 		events[eventCounts] = event_;
 	}
 
-	function addTouchToLikeRewardPool(uint256 _amounts) external {
+	function addTouchToLikeRewardPool(uint256 _amounts) external nonReentrant {
 		require(!isLikeEnded, "like is ended");
 		Event memory event_ = events[eventCounts];
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
@@ -128,12 +129,11 @@ contract TouchEvent is DSAuth{
 		events[eventCounts] = event_;
 	}
 
-	function withdrawLikeReward(uint256 _eventId, address _user) external {
+	function withdrawLikeReward(uint256 _eventId, address _user) external nonReentrant {
 		// check event is like ended
 		require(eventIsLikeEnded(_eventId), "event like is not ended");
 
 		// check available like reward
-		Event memory event_ = events[_eventId];
 		require(!likeRewardIsWithdrawed[_eventId][_user], "reward is withdrawed");
 		uint256 reward = getLikedRewardAmount(_eventId, _user);
 		require(reward > 0, "user has no reward");
@@ -213,7 +213,6 @@ contract TouchEvent is DSAuth{
 
 	function setBidEnded() external auth {
 		isBidEnded = true;
-		Event memory event_ = events[eventCounts];
 		
 		emit EventEnds("Bid");		
 	}
