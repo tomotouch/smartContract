@@ -115,7 +115,7 @@ contract Staker is DSAuth, ReentrancyGuard {
 		emit UserDeposit(msg.sender, _amount, getTime(), getTime() + _period * 30 days, _touchToUser.add(referredBonus), userDepositsCounts[msg.sender]);
 	}
 
-	function withdraw(address _user, uint256 _withdrawId) external nonReentrant nonStopped {
+	function withdraw(address _user, uint256 _withdrawId) external nonReentrant {
 		DepositInfo memory depositInfo = deposits[_user][_withdrawId];
 		require(depositInfo.amount > 0, "the deposit has already withdrawed or not exist");
 		require(getTime() >= depositInfo.startTime.add(1 days), "must deposit more than 1 days");
@@ -130,7 +130,7 @@ contract Staker is DSAuth, ReentrancyGuard {
 		emit UserWithdraw(_user, depositAmount, shouldPayToUser, _withdrawId, getTime());
 	}
 
-	function claimReferalReward(address _user) external nonReentrant nonStopped{
+	function claimReferalReward(address _user) external nonReentrant {
 		Account memory _account = accounts[_user];
 		require(_account.rewards != 0, "user has no rewards");
 		uint256 _amount = _account.rewards;
