@@ -71,6 +71,7 @@ contract Staker is DSAuth, ReentrancyGuard {
 
 	mapping (address => mapping (uint256 => DepositInfo)) public deposits;
 	mapping (address => uint256) public userDepositsCounts;
+	mapping (address => uint256) public userTotalDeposited;
 	mapping (address => Account) public accounts;
 
 	event UserDeposit(address indexed sender, uint256 value, uint256 timestamp, uint256 matureDate, uint256 touchAmount, uint256 depositId);
@@ -90,10 +91,11 @@ contract Staker is DSAuth, ReentrancyGuard {
 	function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant nonStopped {
 		require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
 		require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
-		require(getUserTotalDepositAmount(msg.sender).add(_amount) <= MAXMALDEPOSIT, "deposit too more per user.");
+		require(getUserCurrentDepositAmount(msg.sender).add(_amount) <= MAXMALDEPOSIT, "deposit too more per user.");
 
 		getFromUser(_amount);
 		userDepositsCounts[msg.sender] += 1;
+		userTotalDeposited[msg.sender] += _amount;
 		deposits[msg.sender][userDepositsCounts[msg.sender]] = DepositInfo(_amount, getTime(), _period);
 		principle = principle.add(_amount);
 		
@@ -169,7 +171,7 @@ contract Staker is DSAuth, ReentrancyGuard {
 		return calIntrest(_amount, _period);
 	}
 
-	function getUserTotalDepositAmount(address _user) public view returns (uint256) {
+	function getUserCurrentDepositAmount(address _user) public view returns (uint256) {
 		uint256 depositsCounts = userDepositsCounts[_user];
 		if(depositsCounts == 0) {
 			return 0;
