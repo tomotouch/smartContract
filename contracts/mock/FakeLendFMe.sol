@@ -16,10 +16,12 @@ interface ILendFMe {
 }
 
 contract FakeLendFMe {
-	mapping(address => mapping(address => uint256)) public balances;
 
-	function supply(address _token, uint _amounts) external returns (uint) {
-		require(IERC20(_token).transferFrom(msg.sender, address(this), _amounts));
+
+    mapping(address => mapping(address => uint256)) public balances;
+
+    function supply(address _token, uint _amounts) external returns (uint) {
+	    require(IERC20(_token).transferFrom(msg.sender, address(this), _amounts));
 		balances[_token][msg.sender] += _amounts;
 		return 0;
 	}

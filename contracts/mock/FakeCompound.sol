@@ -14,6 +14,7 @@ interface CErc20 {
 	function redeem(uint tokenAmount) external returns (uint);
 	function redeemUnderlying(uint deemAmount) external returns (uint);
 	function exchangeRateStored() external view returns (uint);
+	function balanceOfUnderlying(address owner) external view returns (uint);
 }
 
 contract FakeCompound {
@@ -53,6 +54,10 @@ contract FakeCompound {
 	}
 
 	function balanceOf(address _owner) external view returns (uint) {
+		return balances[_owner];
+	}
+
+	function balanceOfUnderlying(address _owner) external view returns (uint) {
 		return balances[_owner];
 	}
 }

@@ -3,30 +3,7 @@ pragma solidity ^0.5.4;
 import './IERC20.sol';
 import './ReentrancyGuard.sol';
 import './DSLibrary/DSAuth.sol';
-
-library DSMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x, "ds-math-add-overflow");
-    }
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x, "ds-math-sub-underflow");
-    }
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x, "ds-math-mul-overflow");
-    }
-
-    function div(uint x, uint y) internal pure returns (uint z) {
-        require(y > 0, "ds-math-div-overflow");
-        z = x / y;
-    }
-
-    function min(uint x, uint y) internal pure returns (uint z) {
-        return x <= y ? x : y;
-    }
-    function max(uint x, uint y) internal pure returns (uint z) {
-        return x >= y ? x : y;
-    }
-}
+import './DSLibrary/DSMath.sol';
 
 contract TouchEvent is DSAuth, ReentrancyGuard{
 	using DSMath for uint256;
@@ -36,7 +13,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	bool public isLikeEnded = true;
 	bool public isBidEnded = true;
 	uint256 public eventCounts;
-	mapping(uint256 => Event) public events;	// eventId => optionId => user
+	mapping(uint256 => Event) public events;
 	mapping(uint256 => mapping(uint256 => Option)) public options;
 	mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public options_userLike;
 	mapping(uint256 => mapping(uint256 => mapping(address => uint256))) public options_addr2Id;
@@ -73,7 +50,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	function userLikeGirl(uint256 _optionId, uint256 _amounts) external nonReentrant {
 		Event memory event_ = events[eventCounts];
 		require(!isLikeEnded, "like is ended");
-		require(_optionId <= event_.options, "the option is not exist");
+		require(_optionId < event_.options, "the option is not exist");
 		NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
 
 		Option memory option_ = options[eventCounts][_optionId];
@@ -102,9 +79,9 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	function userBidGirl(uint256 _optionId, uint256 _price) external nonReentrant {
 		Event memory event_ = events[eventCounts];
 		require(!isBidEnded, "bid is ended");
-		require(_optionId <= event_.options, "the option is not exist");
+		require(_optionId < event_.options, "the option is not exist");
 		require(msg.sender != event_.firstBidder, "the sender is already the top bidder");
-		require(_price >= event_.firstBid.mul(110).div(100), "must exceed the last bid more than 10%");
+		require(_price >= event_.firstBid.mul(110).div(100), "must exceed the last bid equal or more than 10%");
 		
 		if (event_.firstBidder == address(0)) {
 			event_.firstBidder = bidProfitBeneficiary;
@@ -145,6 +122,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 
 	// getting function 
 	function getOptionLiker(uint256 _eventId, uint256 _optionId, uint256 _startedId, uint256 _length) public view returns (address[] memory) {
+		require(_eventId <= eventCounts, "_eventId not exist");
 		address[] memory result = new address[](_length);
 		for(uint256 i = 0; i < _length; ++i) {
 			result[i] = options_id2Addr[_eventId][_optionId][_startedId + i + 1];
@@ -153,6 +131,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	}
 
 	function getLikedRewardAmount(uint256 _eventId, address _user) public view returns (uint256) {
+		require(_eventId <= eventCounts, "_eventId not exist");
 		Event memory event_ = events[_eventId];
 		uint256 userLikesAmount = options_userLike[_eventId][event_.mostLikedOption][_user];
 		if(userLikesAmount == 0) {
@@ -164,6 +143,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	}
 
 	function eventIsLikeEnded(uint256 _eventId) public view returns (bool) {
+		require(_eventId <= eventCounts, "_eventId not exist");
 		if(eventCounts > _eventId) {
 			return true;
 		} else if (eventCounts == _eventId) {
@@ -173,6 +153,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	}
 
 	function eventIsBidEnded(uint256 _eventId) public view returns (bool) {
+		require(_eventId <= eventCounts, "_eventId not exist");
 		if(eventCounts > _eventId) {
 			return true;
 		} else if (eventCounts == _eventId) {
@@ -191,6 +172,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	}
 
 	function setLikeEnded(address _winner) external auth {
+		require(isLikeEnded == false, "like is already ended");
 		address receiver = _winner;
 		if(receiver == address(0)) {
 			receiver = msg.sender;
@@ -212,6 +194,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 	}
 
 	function setBidEnded() external auth {
+		require(isBidEnded == false, "bid is already ended");
 		isBidEnded = true;
 		
 		emit EventEnds("Bid");		

@@ -13,67 +13,8 @@
 
 pragma solidity ^0.5.4;
 
-import "../DSLibrary/DSMath.sol";
-
-contract DSAuthEvents {
-    event LogSetAuthority (address indexed authority);
-    event LogSetOwner     (address indexed owner);
-}
-
-contract DSAuth is DSAuthEvents {
-    address      public  authority;
-    address      public  owner;
-
-    constructor() public {
-        owner = msg.sender;
-        emit LogSetOwner(msg.sender);
-    }
-
-    function setOwner(address owner_)
-        public
-        onlyOwner
-    {
-        require(owner_ != address(0), "invalid owner address");
-        owner = owner_;
-        emit LogSetOwner(owner);
-    }
-
-    function setAuthority(address authority_)
-        public
-        onlyOwner
-    {
-        authority = authority_;
-        emit LogSetAuthority(address(authority));
-    }
-
-    modifier auth {
-        require(isAuthorized(msg.sender), "ds-auth-unauthorized");
-        _;
-    }
-
-    modifier onlyOwner {
-        require(isOwner(msg.sender), "ds-auth-non-owner");
-        _;
-    }
-
-    function isOwner(address src) public view returns (bool) {
-        return bool(src == owner);
-    }
-
-    function isAuthorized(address src) internal view returns (bool) {
-        if (src == address(this)) {
-            return true;
-        } else if (src == owner) {
-            return true;
-        } else if (authority == address(0)) {
-            return false;
-        } else if (src == authority) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-}
+import "./DSMath.sol";
+import "./DSAuth.sol";
 
 contract DSNote {
     event LogNote(
@@ -102,7 +43,7 @@ contract DSNote {
     }
 }
 
-contract DSStop is DSNote, DSAuth, DSMath {
+contract DSStop is DSNote, DSAuth {
     bool public stopped;
 
     modifier stoppable {
@@ -132,7 +73,9 @@ contract ERC20 is ERC20Events {
     function transferFrom(address src, address dst, uint wad) public returns (bool);
 }
 
-contract DSTokenBase is ERC20, DSMath {
+contract DSTokenBase is ERC20 {
+    using DSMath for uint256;
+
     uint256                                            _supply;
     mapping (address => uint256)                       _balances;
     mapping (address => mapping (address => uint256))  _approvals;
@@ -161,12 +104,12 @@ contract DSTokenBase is ERC20, DSMath {
     {
         if (src != msg.sender) {
             require(_approvals[src][msg.sender] >= wad, "ds-token-insufficient-approval");
-            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
+            _approvals[src][msg.sender] = _approvals[src][msg.sender].sub(wad);
         }
 
         require(_balances[src] >= wad, "ds-token-insufficient-balance");
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
+        _balances[src] = _balances[src].sub(wad);
+        _balances[dst] = _balances[dst].add(wad);
 
         emit Transfer(src, dst, wad);
 
@@ -215,18 +158,7 @@ contract DSToken is DSTokenBase(0), DSStop {
         stoppable
         returns (bool)
     {
-        if (src != msg.sender && _approvals[src][msg.sender] != uint(-1)) {
-            require(_approvals[src][msg.sender] >= wad, "ds-token-insufficient-approval");
-            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
-        }
-
-        require(_balances[src] >= wad, "ds-token-insufficient-balance");
-        _balances[src] = sub(_balances[src], wad);
-        _balances[dst] = add(_balances[dst], wad);
-
-        emit Transfer(src, dst, wad);
-
-        return true;
+        return super.transferFrom(src, dst, wad);
     }
 
     function mint(address guy, uint wad) public stoppable {
@@ -240,8 +172,8 @@ contract DSToken is DSTokenBase(0), DSStop {
     function _mint(address guy, uint wad) internal {
         require(guy != address(0), "ds-token-mint: mint to the zero address");
 
-        _balances[guy] = add(_balances[guy], wad);
-        _supply = add(_supply, wad);
+        _balances[guy] = _balances[guy].add(wad);
+        _supply = _supply.add(wad);
         emit Transfer(address(0), guy, wad);
     }
 
@@ -251,11 +183,11 @@ contract DSToken is DSTokenBase(0), DSStop {
 
         if (guy != msg.sender && _approvals[guy][msg.sender] != uint(-1)) {
             require(_approvals[guy][msg.sender] >= wad, "ds-token-insufficient-approval");
-            _approvals[guy][msg.sender] = sub(_approvals[guy][msg.sender], wad);
+            _approvals[guy][msg.sender] = _approvals[guy][msg.sender].sub(wad);
         }
 
-        _balances[guy] = sub(_balances[guy], wad);
-        _supply = sub(_supply, wad);
+        _balances[guy] = _balances[guy].sub(wad);
+        _supply = _supply.sub(wad);
         emit Transfer(guy, address(0), wad);
     }
 }
