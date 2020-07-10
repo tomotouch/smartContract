@@ -1,6 +1,7 @@
 pragma solidity ^0.5.4;
 
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./ReentrancyGuard.sol";
 import "./DSLibrary/DSAuth.sol";
 import "./DSLibrary/DSMath.sol";
@@ -17,10 +18,11 @@ interface CErc20 {
 
 contract Staker is DSAuth, ReentrancyGuard {
     using DSMath for uint256;
+    using SafeERC20 for IERC20;
 
     uint256 constant TOUCHDECIMAL = 8;
     uint256 constant STABLEDECIMAL = 6;
-    uint256 constant MAXIMALDEPOSIT = 100000 * (10 ** STABLEDECIMAL);
+    uint256 constant MAXIMUMDEPOSIT = 100000 * (10 ** STABLEDECIMAL);
 
     address public touchToken;
     address public stableCoin;
@@ -63,14 +65,14 @@ contract Staker is DSAuth, ReentrancyGuard {
         touchToken = _touch;
         stableCoin = _stable;
         compound = _compound;
-        NonStandardIERC20Token(_stable).approve(_compound, uint256(-1));
+        IERC20(_stable).safeApprove(_compound, uint256(-1));
         touchPrice = 10 ** STABLEDECIMAL;
     }
 
     function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant nonStopped {
         require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
         require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
-        require(getUserCurrentDepositAmount(msg.sender).add(_amount) <= MAXIMALDEPOSIT, "deposit too more per user.");
+        require(getUserCurrentDepositAmount(msg.sender).add(_amount) <= MAXIMUMDEPOSIT, "deposit too more per user.");
 
         getFromUser(_amount);
         userDepositsCounts[msg.sender] += 1;
@@ -91,7 +93,7 @@ contract Staker is DSAuth, ReentrancyGuard {
         // check interest in stable coin
         uint256 _equaledUSD = calInterest(_amount, _period);
         uint256 _touchToUser = _equaledUSD.mul(10 ** TOUCHDECIMAL).div(touchPrice);
-        NonStandardIERC20Token(touchToken).transfer(msg.sender, _touchToUser.add(referredBonus));
+        IERC20(touchToken).safeTransfer(msg.sender, _touchToUser.add(referredBonus));
 
         emit UserDeposit(
             msg.sender,
@@ -124,7 +126,7 @@ contract Staker is DSAuth, ReentrancyGuard {
         uint256 _amount = _account.rewards;
         _account.rewards = 0;
         accounts[_user] = _account;
-        NonStandardIERC20Token(touchToken).transfer(_user, _amount);
+        IERC20(touchToken).safeTransfer(_user, _amount);
         emit ClaimReferral(_user, _amount, getTime());
     }
 
@@ -152,7 +154,7 @@ contract Staker is DSAuth, ReentrancyGuard {
         return calRealInterest(_user, _withdrawId);
     }
 
-    function getInterestEstimate(uint256 _amount, uint256 _period) public view returns (uint256) {
+    function getInterestEstimate(uint256 _amount, uint256 _period) public pure returns (uint256) {
         return calInterest(_amount, _period);
     }
 
@@ -176,14 +178,14 @@ contract Staker is DSAuth, ReentrancyGuard {
     // owner
     function withdrawProfit() external onlyOwner {
         uint256 _profit = getProfit();
-        CErc20(compound).redeemUnderlying(_profit);
-        NonStandardIERC20Token(stableCoin).transfer(msg.sender, _profit);
+        require(CErc20(compound).redeemUnderlying(_profit) == 0, "compound error");
+        IERC20(stableCoin).safeTransfer(msg.sender, _profit);
     }
 
     function emergencyWithdraw() external onlyOwner {
         uint256 amount = IERC20(compound).balanceOf(address(this));
-        CErc20(compound).redeem(amount);
-        NonStandardIERC20Token(stableCoin).transfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
+        require(CErc20(compound).redeem(amount) == 0, "compound error");
+        IERC20(stableCoin).safeTransfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
     }
 
     function emergencyStop() external onlyOwner {
@@ -195,7 +197,7 @@ contract Staker is DSAuth, ReentrancyGuard {
         // can not withdraw cUSDT
         require(_token != address(compound), "owner can not transfer the cToken");
         uint256 balance = IERC20(_token).balanceOf(address(this));
-        IERC20(_token).transfer(msg.sender, balance);
+        IERC20(_token).safeTransfer(msg.sender, balance);
     }
 
     // internal
@@ -251,12 +253,12 @@ contract Staker is DSAuth, ReentrancyGuard {
     }
 
     function sendToUser(address _user, uint256 _amount) internal {
-        CErc20(compound).redeemUnderlying(_amount);
-        NonStandardIERC20Token(stableCoin).transfer(_user, _amount);
+        require(CErc20(compound).redeemUnderlying(_amount) == 0, "compound error");
+        IERC20(stableCoin).safeTransfer(_user, _amount);
     }
 
     function getFromUser(uint256 _amount) internal    {
-        NonStandardIERC20Token(stableCoin).transferFrom(msg.sender, address(this), _amount);
-        CErc20(compound).mint(_amount);
+        IERC20(stableCoin).safeTransferFrom(msg.sender, address(this), _amount);
+        require(CErc20(compound).mint(_amount) == 0, "compound error");
     }
 }

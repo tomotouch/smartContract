@@ -1,12 +1,15 @@
 pragma solidity ^0.5.4;
 
-import "./IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "./ReentrancyGuard.sol";
 import "./DSLibrary/DSAuth.sol";
 import "./DSLibrary/DSMath.sol";
 
 contract TouchEvent is DSAuth, ReentrancyGuard{
     using DSMath for uint256;
+    using SafeERC20 for IERC20;
+
 
     address public touchToken;
     address public bidProfitBeneficiary;
@@ -58,7 +61,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
         Event memory event_ = events[eventCounts];
         require(!isLikeEnded, "like is ended");
         require(_optionId < event_.options, "the option is not exist");
-        NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
+        IERC20(touchToken).safeTransferFrom(msg.sender, address(this), _amounts);
 
         Option memory option_ = options[eventCounts][_optionId];
         option_.likes = option_.likes.add(_amounts);
@@ -95,8 +98,8 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
         }
 
         uint256 _amountsToOwner = _price.sub(event_.firstBid).div(5);
-        NonStandardIERC20Token(touchToken).transferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
-        NonStandardIERC20Token(touchToken).transferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
+        IERC20(touchToken).safeTransferFrom(msg.sender, bidProfitBeneficiary, _amountsToOwner);
+        IERC20(touchToken).safeTransferFrom(msg.sender, event_.firstBidder, _price.sub(_amountsToOwner));
         emit Outbid(msg.sender, event_.firstBidder, _optionId, _price, _price.sub(_amountsToOwner), now);
         event_.firstBidder = msg.sender;
         event_.firstBid = _price;
@@ -107,7 +110,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
     function addTouchToLikeRewardPool(uint256 _amounts) external nonReentrant {
         require(!isLikeEnded, "like is ended");
         Event memory event_ = events[eventCounts];
-        NonStandardIERC20Token(touchToken).transferFrom(msg.sender, address(this), _amounts);
+        IERC20(touchToken).safeTransferFrom(msg.sender, address(this), _amounts);
         event_.totalLikedRewards = event_.totalLikedRewards.add(_amounts);
 
         events[eventCounts] = event_;
@@ -124,7 +127,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 
         // send reward and set withdrawed
         likeRewardIsWithdrawed[_eventId][_user] = true;
-        NonStandardIERC20Token(touchToken).transfer(_user, reward);
+        IERC20(touchToken).transfer(_user, reward);
     }
 
     // getting function
@@ -194,7 +197,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
 
         // send reward to winner
         uint256 reward = event_.totalLikedRewards.mul(30).div(100);
-        NonStandardIERC20Token(touchToken).transfer(receiver, reward);
+        IERC20(touchToken).safeTransfer(receiver, reward);
         event_.totalLikedRewards = event_.totalLikedRewards.sub(reward);
 
         events[eventCounts] = event_;
