@@ -5,6 +5,11 @@ import '../Staker.sol';
 contract StakerMock is Staker {
 	uint256 public _time;
 
+    constructor(address _touch, address _stable, address _compound)
+    	Staker(_touch, _stable, _compound)
+    	public {
+    }
+
 	function getTime() public view returns (uint256) {
 		return _time;
 	}

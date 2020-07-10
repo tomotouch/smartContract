@@ -166,8 +166,7 @@ contract('test', function(accounts) {
         usdt = await DSToken.new("0x444600000000000000000000000000", 6)
         touch = await Touch.new(1000000000)
         compound = await Compound.new(usdt.address)
-        staker = await Staker.new()
-        tx = staker.activate(touch.address, usdt.address, compound.address)
+        staker = await Staker.new(touch.address, usdt.address, compound.address)
 
         tx = await usdt.mint(user1, d6(1000))
         tx = await usdt.mint(user2, d6(1000))

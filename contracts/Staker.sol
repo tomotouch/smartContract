@@ -29,8 +29,6 @@ contract Staker is DSAuth, ReentrancyGuard {
     address public compound;
     uint256 public touchPrice; // offset 10 ** 6
     uint256 public principle;
-    bool public activated;
-    bool public isStop;
 
     struct DepositInfo {
         uint256 amount;
@@ -45,11 +43,6 @@ contract Staker is DSAuth, ReentrancyGuard {
         uint256 rewards;
     }
 
-    modifier nonStopped() {
-        require (!isStop, "contarct is stopped");
-        _;
-    }
-
     mapping (address => mapping (uint256 => DepositInfo)) public deposits;
     mapping (address => uint256) public userDepositsCounts;
     mapping (address => uint256) public userTotalDeposited;
@@ -59,9 +52,7 @@ contract Staker is DSAuth, ReentrancyGuard {
     event UserWithdraw(address indexed sender, uint256 depositAmount, uint256 value, uint256 withdrawId, uint256 timestamp);
     event ClaimReferral(address indexed sender, uint256 touchAmount, uint256 timestamp);
 
-    function activate(address _touch, address _stable, address _compound) public {
-        require(!activated, "contract has alreadt activated");
-        activated = true;
+    constructor(address _touch, address _stable, address _compound) public {
         touchToken = _touch;
         stableCoin = _stable;
         compound = _compound;
@@ -69,7 +60,7 @@ contract Staker is DSAuth, ReentrancyGuard {
         touchPrice = 10 ** STABLEDECIMAL;
     }
 
-    function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant nonStopped {
+    function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant auth {
         require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
         require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
         require(getUserCurrentDepositAmount(msg.sender).add(_amount) <= MAXIMUMDEPOSIT, "deposit too more per user.");
@@ -186,10 +177,6 @@ contract Staker is DSAuth, ReentrancyGuard {
         uint256 amount = IERC20(compound).balanceOf(address(this));
         require(CErc20(compound).redeem(amount) == 0, "compound error");
         IERC20(stableCoin).safeTransfer(msg.sender, IERC20(stableCoin).balanceOf(address(this)));
-    }
-
-    function emergencyStop() external onlyOwner {
-        isStop = !isStop;
     }
 
     function withdrawContractToken(address _token) external onlyOwner {
