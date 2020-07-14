@@ -31,7 +31,8 @@ contract('test', function(accounts) {
     const winner = accounts[16]
 
     let tx, currentTime
-    let compound, staker, eventContract 
+    let compound, staker, eventContract
+    let dsGuard 
     let usdt, touch
 
     const d18 = function (amount) {
@@ -167,6 +168,9 @@ contract('test', function(accounts) {
         touch = await Touch.new(1000000000)
         compound = await Compound.new(usdt.address)
         staker = await Staker.new(touch.address, usdt.address, compound.address)
+        dsGuard = await DSGuard.new()
+        tx = await staker.setAuthority(dsGuard.address)
+        tx = await dsGuard.permitANY(staker.address, "0x8dbdbe6d")
 
         tx = await usdt.mint(user1, d6(1000))
         tx = await usdt.mint(user2, d6(1000))
