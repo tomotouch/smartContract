@@ -156,7 +156,7 @@ contract('test', function(accounts) {
     }
 
     const renewEventContract = async function () {
-        eventContract = await EventContract.new(touch.address);
+        eventContract = await EventContract.new(touch.address, staker.address);
         tx = await touch.approve(eventContract.address, d8(9999999), {from: user1})
         tx = await touch.approve(eventContract.address, d8(9999999), {from: user2})
         tx = await touch.approve(eventContract.address, d8(9999999), {from: user3})

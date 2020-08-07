@@ -116,7 +116,7 @@ contract('test', function(accounts) {
 
     it("go through", async function () {
         touch = await DSToken.new("0x444600000000000000000000000000", 8)
-        eventContract = await EventContract.new(touch.address);
+        eventContract = await EventContract.new(touch.address, touch.address);
 
         tx = await touch.mint(user1, d8(200))
         tx = await touch.mint(user2, d8(200))
@@ -139,6 +139,7 @@ contract('test', function(accounts) {
         tx = await touch.approvex(eventContract.address, {from: user9})
 
         tx = await eventContract.setBidProfitBeneficiary(bidProfitBeneficiary)
+        tx = await eventContract.setCheckStaked(false)
 
         // init
         await showEventStatus("event contract init")

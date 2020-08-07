@@ -23,6 +23,7 @@ contract Staker is DSAuth, ReentrancyGuard {
     uint256 constant TOUCHDECIMAL = 8;
     uint256 constant STABLEDECIMAL = 6;
     uint256 constant MAXIMUMDEPOSIT = 100000 * (10 ** STABLEDECIMAL);
+    uint256 minimalDeposit = 500 * (10 ** STABLEDECIMAL);
 
     address public touchToken;
     address public stableCoin;
@@ -61,7 +62,7 @@ contract Staker is DSAuth, ReentrancyGuard {
     }
 
     function deposit(uint256 _amount, uint256 _period, address _referrer) external nonReentrant auth {
-        require(_amount >= 500 * (10 ** STABLEDECIMAL), "the supplied amount should more than 500 USD.");
+        require(_amount >= minimalDeposit, "the supplied amount should more than minimal deposit.");
         require(_period > 0 && _period < 4, "the period should between 1 to 3 months. ");
         require(getUserCurrentDepositAmount(msg.sender).add(_amount) <= MAXIMUMDEPOSIT, "deposit too more per user.");
 
@@ -164,6 +165,10 @@ contract Staker is DSAuth, ReentrancyGuard {
     // admin
     function setTouchPrice(uint256 _price) external auth {
         touchPrice = _price;
+    }
+
+    function setMinimalDeposit(uint256 _minimalDeposit) external auth {
+        minimalDeposit = _minimalDeposit;
     }
 
     // owner

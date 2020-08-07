@@ -6,15 +6,20 @@ import "./ReentrancyGuard.sol";
 import "./DSLibrary/DSAuth.sol";
 import "./DSLibrary/DSMath.sol";
 
+interface IStaker {
+    function userDepositsCounts(address _user) external returns (uint256);
+}
+
 contract TouchEvent is DSAuth, ReentrancyGuard{
     using DSMath for uint256;
     using SafeERC20 for IERC20;
 
-
+    IStaker public staker;
     address public touchToken;
     address public bidProfitBeneficiary;
     bool public isLikeEnded = true;
     bool public isBidEnded = true;
+    bool public checkStaked = true;
     uint256 public eventCounts;
     mapping(uint256 => Event) public events;
     mapping(uint256 => mapping(uint256 => Option)) public options;
@@ -52,12 +57,18 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
         uint256 uniqueLike;
     }
 
-    constructor(address _token) public {
+    modifier onlyStaked(address _user) {
+        require(!checkStaked || staker.userDepositsCounts(_user) > 0, "should deposit first");
+        _;
+    } 
+
+    constructor(address _token, address _staker) public {
+        staker = IStaker(_staker);
         touchToken = _token;
         bidProfitBeneficiary = msg.sender;
     }
 
-    function userLikeGirl(uint256 _optionId, uint256 _amounts) external nonReentrant {
+    function userLikeGirl(uint256 _optionId, uint256 _amounts) external nonReentrant onlyStaked(msg.sender) {
         Event memory event_ = events[eventCounts];
         require(!isLikeEnded, "like is ended");
         require(_optionId < event_.options, "the option is not exist");
@@ -86,7 +97,7 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
         emit Liked(_optionId, _amounts, now, msg.sender);
     }
 
-    function userBidGirl(uint256 _optionId, uint256 _price) external nonReentrant {
+    function userBidGirl(uint256 _optionId, uint256 _price) external nonReentrant onlyStaked(msg.sender) {
         Event memory event_ = events[eventCounts];
         require(!isBidEnded, "bid is ended");
         require(_optionId < event_.options, "the option is not exist");
@@ -212,6 +223,9 @@ contract TouchEvent is DSAuth, ReentrancyGuard{
         emit EventEnds("Bid");
     }
 
+    function setCheckStaked(bool _shouldCheck) external auth {
+        checkStaked = _shouldCheck;
+    }
     // owner
     function setBidProfitBeneficiary(address _user) external onlyOwner {
         bidProfitBeneficiary = _user;
