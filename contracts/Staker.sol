@@ -23,7 +23,7 @@ contract Staker is DSAuth, ReentrancyGuard {
     uint256 constant TOUCHDECIMAL = 8;
     uint256 constant STABLEDECIMAL = 6;
     uint256 constant MAXIMUMDEPOSIT = 100000 * (10 ** STABLEDECIMAL);
-    uint256 minimalDeposit = 500 * (10 ** STABLEDECIMAL);
+    uint256 public minimalDeposit = 500 * (10 ** STABLEDECIMAL);
 
     address public touchToken;
     address public stableCoin;
