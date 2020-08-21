@@ -33,6 +33,7 @@ contract TOUCH is ERC20, ERC20Detailed, DSAuth{
     function transferFrom(address sender, address recipient, uint256 amount) public returns (bool) {
         require(blacklist[recipient] == false, "recipient is isBlacklisted");
         require(blacklist[sender] == false, "sender is isBlacklisted");
+        require(blacklist[msg.sender] == false, "caller is isBlacklisted");
         return super.transferFrom(sender, recipient, amount);
     }
 }
