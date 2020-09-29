@@ -124,7 +124,8 @@ contract Staker is DSAuth, ReentrancyGuard {
 
     // getter function
     function tokenBalance() public view returns (uint256) {
-        uint256 balanceInDefi = CErc20(compound).balanceOfUnderlying(address(this));
+        uint256 balanceInDefi = CErc20(compound).balanceOf(address(this));
+        balanceInDefi = balanceInDefi.mul(CErc20(compound).exchangeRateStored()).div(1e18);
         uint256 contractBalance = IERC20(stableCoin).balanceOf(address(this));
         return balanceInDefi.add(contractBalance);
     }
