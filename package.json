@@ -21,7 +21,7 @@
   },
   "homepage": "https://github.com/tomotouch/smartContract#readme",
   "dependencies": {
-    "@openzeppelin/contracts": "^2.5.0",
+    "@openzeppelin/contracts": "^4.7.2",
     "bn.js": "^5.1.1"
   }
 }
